@@ -38,6 +38,13 @@ Visit [PyTorch](https://pytorch.org/) and install the appropriate version for yo
 
 ### 2. Install NATTEN (Required for Linux and Windows; macOS will auto-install)
 * **Linux**: Download from [NATTEN website](https://www.shi-labs.com/natten/)
+```shell
+pip3 install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 --index-url https://download.pytorch.org/whl/cu118
+pip3 install natten==0.15.1+torch220cu118 -f https://shi-labs.com/natten/wheels
+# if too slow to download, download the url directly
+wget https://shi-labs.com/natten/wheels/cu118/torch2.2.0/natten-0.15.1%2Btorch220cu118-cp310-cp310-linux_x86_64.whl
+pip3 install natten-0.15.1+torch220cu118-cp310-cp310-linux_x86_64.whl
+```
 * **macOS**: Auto-installs with `allin1`.
 * **Windows**: Build from source:
 ```shell
