@@ -4,7 +4,7 @@ from typing import List, Union
 from tqdm import tqdm
 from .demix import demix
 from .spectrogram import extract_spectrograms
-from .models import load_pretrained_model
+from .models import load_pretrained_model, AllInOne
 from .visualize import visualize as _visualize
 from .sonify import sonify as _sonify
 from .helpers import (
@@ -23,7 +23,7 @@ def analyze(
   out_dir: PathLike = None,
   visualize: Union[bool, PathLike] = False,
   sonify: Union[bool, PathLike] = False,
-  model: str = 'harmonix-all',
+  model_name: str = 'harmonix-all',
   device: str = 'cuda' if torch.cuda.is_available() else 'cpu',
   include_activations: bool = False,
   include_embeddings: bool = False,
@@ -32,6 +32,7 @@ def analyze(
   keep_byproducts: bool = False,
   overwrite: bool = False,
   multiprocess: bool = True,
+  pretrained_model: AllInOne = None,
 ) -> Union[AnalysisResult, List[AnalysisResult]]:
   """
   Analyzes the provided audio files and returns the analysis results.
@@ -48,7 +49,7 @@ def analyze(
   sonify : Union[bool, PathLike], optional
       Whether to sonify the analysis results or not. If a path is provided, the sonifications will be saved in that
       directory. Default is False. If True, the sonifications will be saved in './sonif'.
-  model : str, optional
+  model_name : str, optional
       Name of the pre-trained model to be used for the analysis. Default is 'harmonix-all'. Please refer to the
       documentation for the available models.
   device : str, optional
@@ -67,7 +68,8 @@ def analyze(
       Whether to overwrite the existing analysis results or not. Default is False.
   multiprocess : bool, optional
       Whether to use multiprocessing for spectrogram extraction, visualization, and sonification. Default is True.
-
+  pretrained_model : AllInOne, optional
+      Whether to use preload model
   Returns
   -------
   Union[AnalysisResult, List[AnalysisResult]]
@@ -120,11 +122,16 @@ def analyze(
     # Extract spectrograms for the tracks that are not analyzed yet.
     spec_paths = extract_spectrograms(demix_paths, spec_dir, multiprocess)
 
-    # Load the model.
-    model = load_pretrained_model(
-      model_name=model,
-      device=device,
-    )
+    if pretrained_model is None:
+      # Load the model.
+      print("load models...")
+      model = load_pretrained_model(
+        model_name=model_name,
+        device=device,
+      )
+    else:
+      print("use preload models")
+      model = pretrained_model
 
     with torch.no_grad():
       pbar = tqdm(zip(todo_paths, spec_paths), total=len(todo_paths))
