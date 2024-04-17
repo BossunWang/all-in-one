@@ -11,7 +11,7 @@ import seaborn as sns
 
 FEATURE_FPS = 100
 
-def calcSimilarity(beat_feats_pca_r, start_idx, intermediate_idx, end_idx):
+def calcSimilarity(beat_feats_pca_r, start_idx, intermediate_idx, end_idx, show=False):
     beat_feats_pca_unit_vec = beat_feats_pca_r / np.linalg.norm(beat_feats_pca_r, axis=-1)[:, None]
 
     g1_vec = np.sum(beat_feats_pca_unit_vec[0: intermediate_idx - start_idx], axis=0)
@@ -20,6 +20,21 @@ def calcSimilarity(beat_feats_pca_r, start_idx, intermediate_idx, end_idx):
     g2_vec = np.sum(beat_feats_pca_unit_vec[end_idx - intermediate_idx: end_idx - start_idx], axis=0)
     g2_vec /= np.linalg.norm(g2_vec, axis=-1)
     cos_score = np.sum(g1_vec * g2_vec)
+
+    if show:
+        plt.figure(f"PCA feats")
+        plt.scatter(beat_feats_pca_unit_vec[0: intermediate_idx - start_idx, 0],
+                    beat_feats_pca_unit_vec[0: intermediate_idx - start_idx, 1],
+                    label="g1",
+                    alpha=0.3, )
+        plt.scatter(beat_feats_pca_unit_vec[intermediate_idx - start_idx: end_idx - start_idx, 0],
+                    beat_feats_pca_unit_vec[intermediate_idx - start_idx: end_idx - start_idx, 1],
+                    label="g2",
+                    alpha=0.3, )
+        plt.legend()
+        plt.show()
+        plt.close()
+
     return cos_score
 
 
@@ -82,8 +97,10 @@ def analysis_feats(all_feats, beats, beat_positions):
         beat_feats_pca_r = runPCA(beat_feats)
         print(f'pca elapsed time: {time.time() - pca_start_time}')
 
-        cos_score_beat_unit_group = calcSimilarity(beat_feats_pca_r, start_idx, start_idx + (end_idx - start_idx) // 2, end_idx)
-        cos_score_two_group = calcSimilarity(beat_feats_pca_r, start_idx, end_idx, end_two_group_idx)
+        cos_score_beat_unit_group \
+            = calcSimilarity(beat_feats_pca_r, start_idx, start_idx + (end_idx - start_idx) // 2, end_idx)
+        cos_score_two_group \
+            = calcSimilarity(beat_feats_pca_r, start_idx, end_idx, end_two_group_idx, show=False)
 
         cos_score_beat_unit_list.append(cos_score_beat_unit_group)
         cos_score_two_group_list.append(cos_score_two_group)
@@ -99,6 +116,7 @@ def analysis_feats(all_feats, beats, beat_positions):
         else:
             plt.axvspan(start_sec, end_sec, facecolor='w', alpha=0.5)
 
+        # too slow
         # cluster_start_time = time.time()
         # # movMF-soft
         # vmf_soft_g1 = VonMisesFisherMixture(n_clusters=1, posterior_type='soft')
@@ -114,19 +132,6 @@ def analysis_feats(all_feats, beats, beat_positions):
         # # print(f'g2 center: {vmf_soft_g2.cluster_centers_}')
         # # print(f'g1 concentrations_: {vmf_soft_g1.concentrations_}')
         # # print(f'g2 concentrations_: {vmf_soft_g2.concentrations_}')
-
-        # plt.figure(f"PCA feats {idx}")
-        # plt.scatter(beat_feats_pca_unit_vec[0: end_idx - start_idx, 0],
-        #             beat_feats_pca_unit_vec[0: end_idx - start_idx, 1],
-        #             label="g1",
-        #             alpha=0.3,)
-        # plt.scatter(beat_feats_pca_unit_vec[end_idx - start_idx: end_two_group_idx - start_idx, 0],
-        #             beat_feats_pca_unit_vec[end_idx - start_idx: end_two_group_idx - start_idx, 1],
-        #             label="g2",
-        #             alpha=0.3,)
-        # plt.legend()
-        # plt.show()
-        # plt.close()
 
     print(f'total elapsed time: {time.time() - total_start_time}')
     plt.savefig("cos_timeline")
@@ -166,10 +171,10 @@ def test_analyze():
                      include_embeddings=True,
                      pretrained_model=pretrained_model,
                      )
-    visualize(
-        result,
-        out_dir='./viz',
-    )
+    # visualize(
+    #     result,
+    #     out_dir='./viz',
+    # )
 
     end_time = time.time()
     print(f'elapsed time: {end_time - start_time}')
